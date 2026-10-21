@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matotech - AI Farming Assistant for East Africa</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        matoDark: '#0A0E17',
+                        matoGreen: '#00E676',
+                        matoPurple: '#D500F9',
+                        matoCyan: '#00E5FF',
+                        matoCard: '#151C2C'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-text {
+            background: linear-gradient(135deg, #00E676, #00E5FF, #D500F9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body class="bg-matoDark text-gray-100 min-h-screen flex flex-col font-sans">
+
+    <!-- Header / Branding Section -->
+    <header class="border-b border-gray-800 bg-opacity-90 bg-matoDark sticky top-0 z-50 backdrop-blur-md">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-matoCyan shadow-lg flex-shrink-0">
+                    <img id="appLogo" src="38843.png" alt="Matotech Logo" class="w-full h-full object-cover" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-full h-full bg-gradient-to-tr from-matoGreen via-matoCyan to-matoPurple flex items-center justify-center font-bold text-black\'>M</div>';">
+                </div>
+                <div>
+                    <h1 class="text-2xl font-extrabold gradient-text tracking-wide">MATOTECH</h1>
+                    <p class="text-xs text-gray-400">AI Agricultural Assistant • Uganda & Kenya</p>
+                </div>
+            </div>
+            <div class="text-xs text-matoGreen bg-matoCard px-3 py-1.5 rounded-lg border border-matoGreen/30">
+                🟢 Live & Public
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-4xl w-full mx-auto p-4 flex flex-col gap-4">
+
+        <!-- Language & Location Selector Bar -->
+        <div class="bg-matoCard p-3 rounded-xl border border-gray-800 flex flex-wrap gap-3 items-center justify-between text-xs sm:text-sm">
+            <div class="flex items-center gap-2">
+                <span class="text-gray-400">🌐 Language:</span>
+                <select id="languageSelect" class="bg-gray-900 border border-gray-700 text-matoGreen rounded-md px-2 py-1 focus:outline-none">
+                    <option value="Luganda">Luganda (Uganda)</option>
+                    <option value="Swahili" selected>Swahili (Kenya / EA)</option>
+                    <option value="English">English</option>
+                    <option value="Luo">Luo (Kenya / Uganda)</option>
+                    <option value="Kikuyu">Kikuyu (Kenya)</option>
+                    <option value="Runyankole">Runyankole (Uganda)</option>
+                </select>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-gray-400">📍 Region:</span>
+                <select id="regionSelect" class="bg-gray-900 border border-gray-700 text-matoCyan rounded-md px-2 py-1 focus:outline-none">
+                    <option value="Uganda">Uganda (Kampala / Mbale / Mbarara / Gulu)</option>
+                    <option value="Kenya">Kenya (Nairobi / Eldoret / Kisumu / Nakuru)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Chat / Diagnostics Output Display -->
+        <div id="chatHistory" class="flex-1 bg-matoCard rounded-xl p-4 border border-gray-800 overflow-y-auto min-h-[350px] max-h-[500px] flex flex-col gap-3">
+            <div class="bg-gray-900/80 rounded-lg p-3 border border-matoGreen/20 text-sm text-gray-300">
+                <p class="font-bold text-matoGreen mb-1">🌿 Oli otya! Jambo! Welcome to Matotech.</p>
+                <p>I am your Gemini-powered agricultural assistant. Ask questions, snap pictures of sick crops, or request local market advice.</p>
+            </div>
+        </div>
+
+        <!-- Image Preview Window -->
+        <div id="imagePreviewContainer" class="hidden relative bg-gray-900 p-2 rounded-xl border border-matoPurple flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <img id="imagePreview" src="" class="w-16 h-16 object-cover rounded-lg border border-gray-700">
+                <span class="text-xs text-gray-300">Image attached for crop diagnosis</span>
+            </div>
+            <button onclick="removeImage()" class="text-red-400 text-sm font-bold px-3 py-1 hover:bg-gray-800 rounded-lg">✕ Remove</button>
+        </div>
+
+        <!-- Input Section -->
+        <div class="bg-matoCard rounded-xl p-3 border border-gray-800 flex flex-col gap-2">
+            <div class="flex items-center gap-2">
+                <label class="cursor-pointer bg-gray-900 hover:bg-gray-800 text-matoCyan p-2.5 rounded-lg border border-gray-700 flex items-center justify-center transition" title="Upload Crop Image">
+                    📸
+                    <input type="file" id="cropImageInput" accept="image/*" class="hidden" onchange="handleImageSelect(event)">
+                </label>
+
+                <button id="micBtn" onclick="toggleVoiceInput()" class="bg-gray-900 hover:bg-gray-800 text-matoPurple p-2.5 rounded-lg border border-gray-700 transition" title="Speak local language">
+                    🎙️
+                </button>
+
+                <textarea id="userInput" rows="1" placeholder="Type or speak a question (e.g. How to treat banana wilt?)..." class="flex-1 bg-gray-900 text-gray-100 text-sm p-2.5 rounded-lg border border-gray-700 focus:outline-none focus:border-matoGreen resize-none"></textarea>
+
+                <button onclick="sendMessage()" class="bg-gradient-to-r from-matoGreen to-matoCyan text-black font-bold px-4 py-2.5 rounded-lg hover:opacity-90 transition">
+                    Send
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-3 text-xs text-gray-500 border-t border-gray-900">
+        Matotech • Empowering East African Smallholder Farmers with Gemini AI
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        let selectedBase64Image = null;
+        let isRecording = false;
+        let recognition = null;
+
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById('userInput').value = transcript;
+                stopVoice();
+            };
+
+            recognition.onerror = () => stopVoice();
+            recognition.onend = () => stopVoice();
+        }
+
+        function toggleVoiceInput() {
+            if (!recognition) {
+                alert("Speech recognition is not supported in this browser. Try Chrome.");
+                return;
+            }
+            if (!isRecording) {
+                const lang = document.getElementById('languageSelect').value;
+                const langCodes = { 'Swahili': 'sw-KE', 'English': 'en-UG', 'Luganda': 'lg-UG' };
+                recognition.lang = langCodes[lang] || 'sw-KE';
+                
+                recognition.start();
+                isRecording = true;
+                document.getElementById('micBtn').classList.add('animate-pulse', 'border-red-500', 'bg-red-950');
+            } else {
+                stopVoice();
+            }
+        }
+
+        function stopVoice() {
+            if (recognition && isRecording) {
+                recognition.stop();
+            }
+            isRecording = false;
+            document.getElementById('micBtn').classList.remove('animate-pulse', 'border-red-500', 'bg-red-950');
+        }
+
+        function handleImageSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const fullResult = e.target.result;
+                    selectedBase64Image = fullResult.split(',')[1];
+                    document.getElementById('imagePreview').src = fullResult;
+                    document.getElementById('imagePreviewContainer').classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function removeImage() {
+            selectedBase64Image = null;
+            document.getElementById('cropImageInput').value = '';
+            document.getElementById('imagePreviewContainer').classList.add('hidden');
+        }
+
+        async function sendMessage() {
+            const inputField = document.getElementById('userInput');
+            const text = inputField.value.trim();
+            const language = document.getElementById('languageSelect').value;
+            const region = document.getElementById('regionSelect').value;
+
+            if (!text && !selectedBase64Image) {
+                alert("Please enter a question or upload a crop photo.");
+                return;
+            }
+
+            appendMessage('user', text, selectedBase64Image ? document.getElementById('imagePreview').src : null);
+
+            const imagePayload = selectedBase64Image;
+            inputField.value = '';
+            removeImage();
+
+            const loadingId = appendLoading();
+
+            try {
+                const responseText = await callBackendAPI(text, imagePayload, language, region);
+                removeLoading(loadingId);
+                appendMessage('assistant', responseText);
+            } catch (error) {
+                removeLoading(loadingId);
+                appendMessage('assistant', `⚠️ Error: ${error.message}`);
+            }
+        }
+
+        async function callBackendAPI(promptText, base64Img, language, region) {
+            const systemInstruction = `You are Matotech AI, an expert agricultural advisor serving smallholder farmers in ${region} (East Africa).
+            - Respond in the language requested: ${language}.
+            - Provide simple, practical, step-by-step remedies using locally accessible tools, organic options, and inputs available in East Africa (Uganda/Kenya).
+            - Keep responses concise, supportive, and easy to read on mobile phones.`;
+
+            let contentsArray = [];
+            if (base64Img) {
+                contentsArray.push({
+                    inlineData: { mimeType: "image/jpeg", data: base64Img }
+                });
+            }
+
+            const fullPrompt = `${systemInstruction}\n\nFarmer Question: ${promptText || "Please diagnose this crop image and recommend local treatments."}`;
+            contentsArray.push({ text: fullPrompt });
+
+            const payload = { contents: [{ parts: contentsArray }] };
+
+            // Calls the Netlify serverless backend function
+            const res = await fetch('/.netlify/functions/gemini', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await res.json();
+
+            if (!res.ok) {
+                throw new Error(result.error || "Server request failed");
+            }
+
+            return result.text;
+        }
+
+        function appendMessage(sender, text, imgSrc) {
+            const chatHistory = document.getElementById('chatHistory');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = sender === 'user' ? 'self-end bg-matoPurple/20 border border-matoPurple/40 rounded-xl p-3 max-w-[85%] text-sm' : 'self-start bg-gray-900 border border-matoGreen/30 rounded-xl p-3 max-w-[90%] text-sm';
+
+            let contentHTML = '';
+            if (imgSrc) {
+                contentHTML += `<img src="${imgSrc}" class="w-32 h-32 object-cover rounded-lg border border-gray-700 mb-2">`;
+            }
+            if (text) {
+                contentHTML += `<p class="whitespace-pre-line text-gray-200">${escapeHtml(text)}</p>`;
+            }
+
+            msgDiv.innerHTML = contentHTML;
+            chatHistory.appendChild(msgDiv);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+
+        function appendLoading() {
+            const chatHistory = document.getElementById('chatHistory');
+            const loadDiv = document.createElement('div');
+            const id = 'loading-' + Date.now();
+            loadDiv.id = id;
+            loadDiv.className = 'self-start bg-gray-900 border border-matoCyan/30 rounded-xl p-3 text-sm text-matoCyan animate-pulse';
+            loadDiv.innerText = '🌱 Matotech AI is analyzing...';
+            chatHistory.appendChild(loadDiv);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+            return id;
+        }
+
+        function removeLoading(id) {
+            const elem = document.getElementById(id);
+            if (elem) elem.remove();
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+    </script>
+</body>
+</html>
